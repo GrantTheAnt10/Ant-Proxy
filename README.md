@@ -1,11 +1,11 @@
 # Ant Proxy
 
-A web proxy that runs entirely in the browser. Open `index.html`, type an
+A web proxy that runs entirely in the browser. Open `AntProxyBrowser.html`, type an
 address, browse.
 
 ## Running it
 
-Open `index.html`. That's it — there's no server to start.
+Open `AntProxyBrowser.html`. That's it — there's no server to start.
 
 HTTP happens inside the page using a WebAssembly client (libcurl.js) carried
 over a WebSocket **Wisp** relay, with an acorn-based AST rewriter for
