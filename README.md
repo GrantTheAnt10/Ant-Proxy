@@ -34,13 +34,3 @@ anything you'd mind someone else seeing.
 - Not a VPN. It only covers what you load through it.
 - Changing the tab's name and icon changes appearance only. It hides nothing
   from network logs or from monitoring software on a managed device.
-
-## History
-
-A self-hosted version that routed through a proxy you ran yourself lived here
-until `243ea06`. If you want it back:
-
-```
-git show 5e5a5f4:server.js  > server.js
-git show 5e5a5f4:index.html > index.html
-```
