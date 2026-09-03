@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTML Preview</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234f6bed'/%3E%3Cpath d='M22 24l-8 8 8 8M42 24l8 8-8 8M36 18L28 46' stroke='%23fff' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#e9ecf1;
+    --card:#fdfdfe;
+    --line:#d6dae2;
+    --line-2:#c2c8d4;
+    --text:#1f2430;
+    --muted:#646c7d;
+    --faint:#8a91a1;
+    --accent:#4f6bed;
+    --accent-dark:#3f57cc;
+    --danger:#d1495b;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    display:grid;
+    place-items:center;
+    padding:24px;
+  }
+  button,input,textarea{font:inherit;color:inherit}
+
+  .card{
+    width:min(100%,720px);
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    box-shadow:0 1px 2px rgba(22,28,45,.05),0 12px 28px -18px rgba(22,28,45,.35);
+    padding:22px;
+  }
+  .head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .head svg{width:26px;height:26px;flex:none}
+  h1{margin:0;font-size:1.12rem;font-weight:650;letter-spacing:-.01em}
+  .sub{margin:0 0 18px;color:var(--muted);font-size:.88rem}
+
+  /* drop zone doubles as the file picker */
+  .drop{
+    border:1.5px dashed var(--line-2);
+    border-radius:11px;
+    background:#f4f6f9;
+    padding:20px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s,background .15s;
+  }
+  .drop:hover{border-color:var(--accent);background:#f0f3fb}
+  .drop.over{border-color:var(--accent);background:#eaf0fe}
+  .drop .big{font-weight:600;font-size:.95rem}
+  .drop .small{color:var(--faint);font-size:.82rem;margin-top:3px}
+  .drop .name{color:var(--accent);font-weight:600;font-size:.86rem;margin-top:7px;word-break:break-all}
+
+  .or{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--faint);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase}
+  .or::before,.or::after{content:"";height:1px;background:var(--line);flex:1}
+
+  label.lbl{display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:6px}
+  textarea{
+    width:100%;
+    min-height:190px;
+    resize:vertical;
+    padding:12px 13px;
+    border:1px solid var(--line-2);
+    border-radius:10px;
+    background:#fbfcfd;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:.83rem;
+    line-height:1.55;
+    tab-size:2;
+  }
+  textarea:focus-visible,.drop:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .row{display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}
+  .btn{
+    display:inline-flex;align-items:center;gap:7px;
+    padding:9px 16px;border-radius:9px;cursor:pointer;
+    border:1px solid var(--line-2);background:#fff;font-size:.88rem;font-weight:600;
+    transition:background .15s,border-color .15s,transform .1s;
+  }
+  .btn:hover{background:#f3f5f9}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .spacer{flex:1}
+  .check{display:inline-flex;align-items:center;gap:7px;font-size:.83rem;color:var(--muted);cursor:pointer;user-select:none}
+  .check input{width:15px;height:15px;accent-color:var(--accent);cursor:pointer}
+  .err{color:var(--danger);font-size:.83rem;margin-top:10px;min-height:1em}
+
+  /* ── the preview overlay ─────────────────────────────────────────── */
+  .stage{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column}
+  .stage[hidden]{display:none}
+  .bar{
+    display:flex;align-items:center;gap:8px;
+    padding:7px 10px;background:#f2f4f8;border-bottom:1px solid var(--line);flex:none;
+  }
+  .bar .title{font-size:.82rem;color:var(--muted);margin-left:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar .btn{padding:6px 12px;font-size:.82rem}
+  .stage iframe{flex:1;width:100%;border:0;background:#fff}
+
+  /* the bar hides itself in real fullscreen so the page truly fills the screen */
+  .stage:fullscreen .bar{display:none}
+  .stage:-webkit-full-screen .bar{display:none}
+
+  .hint{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);
+    background:rgba(31,36,48,.88);color:#fff;font-size:.78rem;padding:6px 12px;border-radius:999px;
+    pointer-events:none;opacity:0;transition:opacity .25s}
+  .hint.show{opacity:1}
+</style>
+</head>
+<body>
+
+<main class="card" id="card">
+  <div class="head">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" rx="14" fill="#4f6bed"/>
+      <path d="M22 24l-8 8 8 8M42 24l8 8-8 8M36 18L28 46" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <h1>HTML Preview</h1>
+  </div>
+  <p class="sub">Pick a file or paste some HTML. It opens full screen straight away.</p>
+
+  <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose an HTML file, or drop one here">
+    <div class="big">Choose a file</div>
+    <div class="small">or drag one here &middot; .html, .htm, .svg, .txt</div>
+    <div class="name" id="fileName"></div>
+  </div>
+  <input type="file" id="file" accept=".html,.htm,.svg,.txt,text/html,image/svg+xml" hidden>
+
+  <div class="or">or</div>
+
+  <label class="lbl" for="code">Paste your code</label>
+  <textarea id="code" spellcheck="false" placeholder="&lt;!DOCTYPE html&gt;&#10;&lt;html&gt;&#10;  &lt;body&gt;&#10;    &lt;h1&gt;Hello&lt;/h1&gt;&#10;  &lt;/body&gt;&#10;&lt;/html&gt;"></textarea>
+
+  <div class="row">
+    <button class="btn primary" id="run">Open full screen</button>
+    <button class="btn" id="clear">Clear</button>
+    <span class="spacer"></span>
+    <label class="check" title="Runs the page in an isolated origin. Turn off if it needs localStorage or cookies.">
+      <input type="checkbox" id="isolate" checked>
+      Isolate
+    </label>
+  </div>
+  <div class="err" id="err"></div>
+</main>
+
+<section class="stage" id="stage" hidden>
+  <div class="bar">
+    <button class="btn" id="back">&larr; Back</button>
+    <button class="btn" id="reload">Reload</button>
+    <button class="btn" id="full">Fullscreen</button>
+    <span class="title" id="stageTitle"></span>
+  </div>
+  <iframe id="frame" title="Preview"></iframe>
+</section>
+
+<div class="hint" id="hint">Press Esc to go back</div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const drop = $("drop"), file = $("file"), code = $("code"), err = $("err");
+  const stage = $("stage"), bar = stage.querySelector(".bar"), hint = $("hint");
+
+  let current = "";            // the HTML currently being previewed
+  let label = "";              // filename or "pasted code", shown in the bar
+
+  const setErr = (m) => { err.textContent = m || ""; };
+
+  function flashHint() {
+    hint.classList.add("show");
+    setTimeout(() => hint.classList.remove("show"), 1800);
+  }
+
+  /* Rebuild the iframe on every run. Swapping the sandbox attribute on a
+     live frame doesn't reliably re-apply it, and a fresh element also
+     guarantees no state leaks between previews. */
+  function show(html, name) {
+    if (!html.trim()) { setErr("Nothing to preview yet."); return; }
+    setErr("");
+    current = html;
+    label = name || "pasted code";
+    $("stageTitle").textContent = label;
+
+    const old = $("frame");
+    const frame = document.createElement("iframe");
+    frame.id = "frame";
+    frame.title = "Preview";
+    if ($("isolate").checked) {
+      // No allow-same-origin: the preview can run scripts but can't reach
+      // back into this page. Dropping it would let the frame remove its
+      // own sandbox, which defeats the point.
+      frame.setAttribute("sandbox", "allow-scripts allow-forms allow-modals allow-popups allow-downloads allow-pointer-lock");
+    }
+    old.replaceWith(frame);
+    frame.srcdoc = html;
+
+    stage.hidden = false;
+    flashHint();
+  }
+
+  function close() {
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    stage.hidden = true;
+    $("frame").removeAttribute("srcdoc");
+  }
+
+  /* ── file input ─────────────────────────────────────────────────── */
+  function readFile(f) {
+    if (!f) return;
+    if (f.size > 25 * 1024 * 1024) { setErr("That file is over 25 MB — too big to preview."); return; }
+    const r = new FileReader();
+    r.onload = () => {
+      $("fileName").textContent = f.name;
+      code.value = r.result;
+      show(r.result, f.name);
+    };
+    r.onerror = () => setErr("Couldn't read that file.");
+    r.readAsText(f);
+  }
+
+  drop.addEventListener("click", () => file.click());
+  drop.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); file.click(); }
+  });
+  file.addEventListener("change", () => readFile(file.files[0]));
+
+  ["dragenter", "dragover"].forEach(ev =>
+    drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(ev =>
+    drop.addEventListener(ev, () => drop.classList.remove("over")));
+  drop.addEventListener("drop", (e) => {
+    e.preventDefault();
+    readFile(e.dataTransfer?.files?.[0]);
+  });
+  // stop a stray drop elsewhere from navigating the tab away
+  window.addEventListener("dragover", e => e.preventDefault());
+  window.addEventListener("drop", e => e.preventDefault());
+
+  /* ── paste ──────────────────────────────────────────────────────── */
+  code.addEventListener("paste", (e) => {
+    const text = e.clipboardData?.getData("text");
+    if (!text || !text.trim()) return;
+    // let the textarea take the paste first, then preview what's in it
+    setTimeout(() => {
+      $("fileName").textContent = "";
+      show(code.value, "pasted code");
+    }, 0);
+  });
+
+  /* ── buttons and keys ───────────────────────────────────────────── */
+  $("run").addEventListener("click", () => show(code.value, $("fileName").textContent || "pasted code"));
+  $("clear").addEventListener("click", () => {
+    code.value = ""; file.value = ""; $("fileName").textContent = ""; setErr(""); code.focus();
+  });
+  $("back").addEventListener("click", close);
+  $("reload").addEventListener("click", () => show(current, label));
+  $("full").addEventListener("click", () => {
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else stage.requestFullscreen?.().catch(() => setErr("Fullscreen was refused by the browser."));
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (stage.hidden) {
+      // Ctrl/Cmd+Enter runs without reaching for the mouse
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); $("run").click(); }
+      return;
+    }
+    if (e.key === "Escape" && !document.fullscreenElement) { e.preventDefault(); close(); }
+  });
+})();
+</script>
+</body>
+</html>
